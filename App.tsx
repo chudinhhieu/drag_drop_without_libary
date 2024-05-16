@@ -1,16 +1,12 @@
-// Import các thành phần cần thiết từ thư viện React và React Native
 import React, { useState } from 'react';
-import { View, Animated, PanResponder, FlatList, SafeAreaView, Text, StyleSheet } from 'react-native';
+import { View, Vibration, Animated, PanResponder, FlatList, SafeAreaView, Text, StyleSheet } from 'react-native';
 
-// Định nghĩa kiểu dữ liệu cho một mục trong danh sách
 interface Item {
   id: string;
   title: string;
 }
 
-// Component chính của ứng dụng
 const App = () => {
-  // Khởi tạo state để lưu trữ danh sách các mục
   const [data, setData] = useState<Item[]>([
     { id: '1', title: 'Item 1' },
     { id: '2', title: 'Item 2' },
@@ -18,22 +14,19 @@ const App = () => {
     { id: '4', title: 'Item 4' },
     { id: '5', title: 'Item 5' },
   ]);
+  const sizeHeight = 110;
 
-  // Render mỗi mục trong danh sách
   const renderItem = ({ item, index }: { item: Item; index: number }) => {
     return <DraggableItem item={item} index={index} />;
   };
 
-  // Component cho mỗi mục có thể kéo thả
   const DraggableItem = ({ item, index }: { item: Item; index: number }) => {
-    // Khởi tạo giá trị state để theo dõi vị trí của mục khi kéo thả
     const pan = useState(new Animated.ValueXY())[0];
-
-    // Tạo PanResponder để xử lý sự kiện kéo thả
     const panResponder = useState(
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
         onPanResponderGrant: () => {
+          Vibration.vibrate([10, 10], false);
           pan.setOffset({
             x: pan.x._value,
             y: pan.y._value,
@@ -41,7 +34,6 @@ const App = () => {
           pan.setValue({ x: 0, y: 0 });
         },
         onPanResponderMove: (evt, gestureState) => {
-          console.log("dy:", gestureState.dy);
           Animated.event(
             [null, { dx: pan.x, dy: pan.y }],
             { useNativeDriver: false }
@@ -49,17 +41,14 @@ const App = () => {
         },
 
         onPanResponderRelease: (_, gestureState) => {
-          // Tính toán vị trí mới cho mục khi kéo thả kết thúc
-          const newPosition = calculateNewPosition(gestureState, index);
-          // Nếu vị trí mới khác vị trí hiện tại, cập nhật danh sách dữ liệu
-          if (newPosition !== index) {
-            const newData = [...data]; // Tạo bản sao của mảng dữ liệu
-            const tempItem = newData[index]; // Lưu trữ giá trị của phần tử tại index
-            newData[index] = newData[newPosition]; // Thay đổi vị trí của phần tử tại index
-            newData[newPosition] = tempItem; // Thay đổi vị trí của phần tử tại newPosition
-            setData(newData); // Cập nhật state với mảng đã được cập nhật
+          const newPosition = calculateNewPosition(gestureState, index,sizeHeight);
+          if (newPosition !== index && newPosition <= data.length) {
+            const newData = [...data];
+            const tempItem = newData[index];
+            newData[index] = newData[newPosition];
+            newData[newPosition] = tempItem;
+            setData(newData);
           } else {
-            // Nếu vị trí mới bằng với vị trí ban đầu, thực hiện hiệu ứng nhảy trở lại vị trí ban đầu
             Animated.spring(
               pan,
               {
@@ -74,7 +63,6 @@ const App = () => {
       })
     )[0];
 
-    // Trả về một Animated.View để hiển thị mục có thể kéo thả
     return (
       <Animated.View
         style={[
@@ -88,28 +76,24 @@ const App = () => {
     );
   };
 
-  // Tính toán vị trí mới cho mục khi kéo thả
-  const calculateNewPosition = (gestureState: any, index: number) => {
-    console.log("dy:", gestureState.dy);
-    console.log("index:", index);
-    if (gestureState.dy > 0) {
-      return Math.abs(Math.round(gestureState.dy / 100)) + index;
-    } else {
-      return Math.abs(Math.abs(Math.round(gestureState.dy / 100)) - index);
+  const calculateNewPosition = (gestureState: any, index: number, sizeHeight: number) => {
+    const dy = gestureState.dy;
+    const sizeData = data.length;
+    const dropAt = Math.round(dy / sizeHeight) + index;
+    if (dropAt < 0 || dropAt > sizeData) {
+      return index;
     }
+
+    return dropAt;
   };
 
-  // Render danh sách các mục trong một FlatList
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ justifyContent: 'center', alignItems: 'center', paddingTop: 70 }}>
         <FlatList
           data={data}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          onScroll={() => {
-            // Logic for dragging
-          }}
           scrollEnabled={true}
           contentContainerStyle={{ paddingVertical: 20 }}
         />
@@ -118,7 +102,6 @@ const App = () => {
   );
 };
 
-// Khai báo các kiểu dữ liệu và các styles cho ứng dụng
 const styles = StyleSheet.create({
   itemContainer: {
     width: 100,
@@ -134,5 +117,4 @@ const styles = StyleSheet.create({
   }
 });
 
-// Xuất App ra ngoài để sử dụng
 export default App;
