@@ -21,7 +21,7 @@ const App = () => {
   };
 
   const DraggableItem = ({ item, index }: { item: Item; index: number }) => {
-    const pan = useState(new Animated.ValueXY())[0];
+    const pan = useState<any>(new Animated.ValueXY())[0];
     const panResponder = useState(
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
