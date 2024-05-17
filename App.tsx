@@ -80,10 +80,9 @@ const App = () => {
     const dy = gestureState.dy;
     const sizeData = data.length;
     const dropAt = Math.round(dy / sizeHeight) + index;
-    if (dropAt < 0 || dropAt > sizeData) {
+    if (dropAt < 0 || dropAt >= sizeData) {
       return index;
     }
-
     return dropAt;
   };
 
